@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import { Kanban, Plus, Trash2, Users, ArrowRight } from 'lucide-react';
+import { 
+  Kanban, Plus, Trash2, Users, ArrowRight, Play, Trophy, 
+  Activity, Star, Award, Shield, CheckCircle2 
+} from 'lucide-react';
+
+const GRADIENTS = [
+  'from-[#667eea] to-[#764ba2]',
+  'from-[#ff7e5f] to-[#feb47b]',
+  'from-[#00c6ff] to-[#0072ff]',
+  'from-[#11998e] to-[#38ef7d]',
+  'from-[#fc4a1a] to-[#f7b733]',
+];
 
 export default function BoardList({ onSelectBoard }) {
   const [boards, setBoards] = useState([]);
@@ -9,6 +20,7 @@ export default function BoardList({ onSelectBoard }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newBoardName, setNewBoardName] = useState('');
   const [newBoardDesc, setNewBoardDesc] = useState('');
+  const [activeTab, setActiveTab] = useState('All Boards');
 
   useEffect(() => {
     fetchBoards();
@@ -63,69 +75,167 @@ export default function BoardList({ onSelectBoard }) {
   if (loading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
-        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-slate-500 font-medium text-sm">Loading your workspace...</p>
+        <div className="w-12 h-12 border-4 border-[#4f46e5] border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-[#6b7280] font-medium text-sm">Loading your enterprise workspace...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10 flex-1 flex flex-col w-full animate-fade-in-scale">
+    <div className="max-w-7xl mx-auto px-6 py-8 flex-1 flex flex-col w-full animate-fade-in-up">
       
       {/* Hero Section */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-8 md:p-12 mb-12 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-8 relative overflow-hidden">
-        {/* Soft background glow */}
-        <div className="absolute -right-20 -top-20 w-80 h-80 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute -left-20 -bottom-20 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
-
-        <div className="max-w-2xl relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold mb-4">
-            <Kanban className="w-3.5 h-3.5" />
-            <span>ZenBoard Workspace</span>
+      <div 
+        className="rounded-2xl border border-[#e5e7eb] p-8 md:p-12 mb-8 flex flex-col lg:flex-row items-center justify-between gap-12 relative overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
+        style={{ background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%)' }}
+      >
+        {/* Left Side Info */}
+        <div className="max-w-2xl text-left relative z-10 flex-1">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-indigo-100/80 text-[#4f46e5] text-xs font-bold mb-6 shadow-sm">
+            <span>✨</span>
+            <span>Now with AI-powered suggestions</span>
           </div>
-          <h1 className="text-3.5xl md:text-4.5xl font-extrabold tracking-tight text-slate-900 mb-3 leading-tight">
-            Simplify your workflow, <br />
-            <span className="bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 bg-clip-text text-transparent">amplify your team focus.</span>
+          
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-[#111827] mb-4 leading-[1.1]">
+            Your team's command center for shipping faster
           </h1>
-          <p className="text-slate-500 text-sm md:text-base leading-relaxed max-w-xl">
-            Track milestones, plan sprints, and organize your files and tag labels. Work collaboratively with team members in a fast, elegant, and business-focused space.
+          
+          <p className="text-[#6b7280] text-sm md:text-base leading-relaxed max-w-xl mb-8">
+            Streamline projects, eliminate chaos, and deliver results — all in one beautiful, enterprise-ready collaborative workspace.
           </p>
+
+          <div className="flex flex-wrap gap-4">
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-[#4f46e5] hover:bg-[#4338ca] text-white font-bold text-sm btn-transition btn-hover shadow-sm active:scale-95 group"
+            >
+              <Plus className="w-4 h-4 transition-transform group-hover:rotate-90" />
+              Create New Board
+            </button>
+            <button
+              className="flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-white border border-[#e5e7eb] hover:bg-[#fafafa] text-[#111827] font-bold text-sm btn-transition shadow-sm hover:border-[#d1d5db]"
+            >
+              <Play className="w-4 h-4 text-[#6b7280] fill-[#6b7280]/20" />
+              Watch Demo
+            </button>
+          </div>
         </div>
-        
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/15 active:scale-95 self-start md:self-center group relative z-10 shrink-0 text-sm"
-        >
-          <Plus className="w-4 h-4 transition-transform group-hover:rotate-90" />
-          Create New Board
-        </button>
+
+        {/* Right Side Stats cards */}
+        <div className="flex flex-col gap-4 w-full sm:w-80 relative z-10 shrink-0 select-none">
+          {/* Card 1 */}
+          <div className="bg-white border border-[#e5e7eb] rounded-xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-[#6b7280]">Active Tasks</div>
+              <div className="text-sm font-bold text-[#111827] flex items-center gap-1.5 mt-0.5">
+                24 Tasks
+                <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2 */}
+          <div className="bg-white border border-[#e5e7eb] rounded-xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[#4f46e5]">
+              <Kanban className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-[#6b7280]">Active Workspaces</div>
+              <div className="text-sm font-bold text-[#111827] mt-0.5">{boards.length} Boards</div>
+            </div>
+          </div>
+
+          {/* Card 3 */}
+          <div className="bg-white border border-[#e5e7eb] rounded-xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-10 h-10 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+              <Trophy className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-[#6b7280]">Milestone Rate</div>
+              <div className="text-sm font-bold text-[#111827] mt-0.5">98% On-time</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Bar */}
+      <div className="bg-white border border-[#e5e7eb] rounded-xl py-5 px-6 mb-12 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+        <div className="flex items-center gap-3 flex-1 justify-center">
+          <Users className="w-4 h-4 text-[#6b7280]" />
+          <span className="text-sm font-bold text-[#111827]">50K+ Teams</span>
+        </div>
+        <div className="hidden md:block h-6 w-px bg-[#e5e7eb]"></div>
+        <div className="flex items-center gap-3 flex-1 justify-center">
+          <Activity className="w-4 h-4 text-[#6b7280]" />
+          <span className="text-sm font-bold text-[#111827]">99.9% Uptime</span>
+        </div>
+        <div className="hidden md:block h-6 w-px bg-[#e5e7eb]"></div>
+        <div className="flex items-center gap-3 flex-1 justify-center">
+          <Star className="w-4 h-4 text-[#6b7280] fill-[#f59e0b]/10" />
+          <span className="text-sm font-bold text-[#111827]">4.9/5 Rating</span>
+        </div>
+        <div className="hidden md:block h-6 w-px bg-[#e5e7eb]"></div>
+        <div className="flex items-center gap-3 flex-1 justify-center">
+          <Award className="w-4 h-4 text-[#6b7280]" />
+          <span className="text-sm font-bold text-[#111827]">SOC2 Certified</span>
+        </div>
+      </div>
+
+      {/* Workspaces Section Title & Filter Tabs */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-bold tracking-tight text-[#111827]">Your Workspaces</h2>
+          <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[#4f46e5] text-xs font-bold">
+            {boards.length}
+          </span>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-lg border border-[#e5e7eb] self-start md:self-auto">
+          {['All Boards', 'Recent', 'Starred'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
+                activeTab === tab 
+                  ? 'bg-white text-[#4f46e5] shadow-sm' 
+                  : 'text-[#6b7280] hover:text-[#111827]'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
       </div>
 
       {error && (
-        <div className="mb-8 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex flex-col gap-3">
-          <p className="font-medium">{error}</p>
+        <div className="mb-8 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex flex-col gap-3">
+          <p className="font-semibold">{error}</p>
           <button 
             onClick={fetchBoards}
-            className="px-4 py-2 bg-rose-100 hover:bg-rose-200 text-rose-900 font-bold rounded-xl text-xs self-start transition-all"
+            className="px-4 py-2 bg-rose-100 hover:bg-rose-200 text-rose-900 font-bold rounded-lg text-xs self-start transition-all"
           >
             Retry Connection
           </button>
         </div>
       )}
 
-      {/* Grid */}
+      {/* Boards Grid */}
       {boards.length === 0 && !error ? (
-        <div className="flex-1 border border-dashed border-slate-200 rounded-3xl p-12 flex flex-col items-center justify-center text-center bg-white min-h-[350px] shadow-sm">
-          <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl mb-4">
-            <Kanban className="w-12 h-12 text-slate-400 stroke-[1.5]" />
+        <div className="border-2 border-dashed border-[#d1d5db] rounded-2xl p-12 flex flex-col items-center justify-center text-center bg-white min-h-[300px]">
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl mb-4">
+            <Kanban className="w-10 h-10 text-slate-400 stroke-[1.5]" />
           </div>
-          <h3 className="text-xl font-bold text-slate-800">No boards created yet</h3>
-          <p className="mt-2 text-slate-500 max-w-sm text-sm">
-            Create your first board to start organizing your lists, tags, and collaborative cards.
+          <h3 className="text-lg font-bold text-[#111827]">No boards created yet</h3>
+          <p className="mt-1 text-[#6b7280] max-w-xs text-xs">
+            Create your first workspace to start organizing your columns, tagging priorities, and tracking milestones.
           </p>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="mt-6 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-650 border border-indigo-200/50 font-bold text-sm transition-all"
+            className="mt-6 flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#4f46e5] hover:bg-[#4338ca] text-white font-bold text-xs transition-all shadow-sm"
           >
             <Plus className="w-4 h-4" />
             Get Started
@@ -133,72 +243,115 @@ export default function BoardList({ onSelectBoard }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {boards.map((board) => (
-            <div
-              key={board.id}
-              onClick={() => onSelectBoard(board.id)}
-              className="group relative border border-slate-200/80 hover:border-indigo-500/50 rounded-2xl p-6 bg-white transition-all duration-300 cursor-pointer shadow-sm hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-1 flex flex-col justify-between min-h-[200px]"
-            >
-              {/* Delete Button (floating) */}
-              <button
-                onClick={(e) => handleDeleteBoard(e, board.id)}
-                className="absolute top-4 right-4 p-2 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-100/50 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
-                title="Delete Board"
+          
+          {/* Active board cards */}
+          {boards.map((board, index) => {
+            const gradientClass = GRADIENTS[index % GRADIENTS.length];
+            return (
+              <div
+                key={board.id}
+                onClick={() => onSelectBoard(board.id)}
+                className="group relative border border-[#e5e7eb] rounded-xl bg-white overflow-hidden card-transition card-hover cursor-pointer shadow-sm flex flex-col justify-between min-h-[220px]"
               >
-                <Trash2 className="w-4 h-4" />
-              </button>
+                {/* Colored unique gradient banner */}
+                <div className={`h-2.5 bg-gradient-to-r ${gradientClass} w-full`}></div>
 
-              <div>
-                <h3 className="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition-colors flex items-center gap-2 mb-2 pr-8">
-                  {board.name}
-                </h3>
-                <p className="text-xs text-slate-500 line-clamp-3 mb-4 leading-relaxed">
-                  {board.description || 'No description provided.'}
-                </p>
-              </div>
+                {/* Card Delete action */}
+                <button
+                  onClick={(e) => handleDeleteBoard(e, board.id)}
+                  className="absolute top-6 right-4 p-1.5 rounded-lg bg-white/95 border border-[#e5e7eb] text-slate-400 hover:text-rose-600 hover:bg-rose-50 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 shadow-sm"
+                  title="Delete Board"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
 
-              <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-auto">
-                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                  <Users className="w-3.5 h-3.5 text-slate-450" />
-                  <span>{board.members?.length || 0}</span>
-                  <span>{board.members?.length === 1 ? 'member' : 'members'}</span>
+                {/* Body */}
+                <div className="p-5 flex-1">
+                  <h3 className="text-base font-bold text-[#111827] group-hover:text-[#4f46e5] transition-colors flex items-center gap-2 mb-2 pr-6">
+                    {board.name}
+                  </h3>
+                  <p className="text-xs text-[#6b7280] line-clamp-3 leading-relaxed">
+                    {board.description || 'No description provided for this work board.'}
+                  </p>
                 </div>
-                <span className="text-xs text-indigo-600 group-hover:text-indigo-700 font-bold flex items-center gap-1 transition-all group-hover:translate-x-1">
-                  Open Board
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </span>
+
+                {/* Footer */}
+                <div className="px-5 py-4 border-t border-[#e5e7eb] flex items-center justify-between mt-auto bg-slate-50/50">
+                  {/* Staged member avatars */}
+                  <div className="flex -space-x-1.5 overflow-hidden">
+                    {board.members && board.members.slice(0, 4).map(member => (
+                      <div 
+                        key={member.id}
+                        title={member.name}
+                        className="w-5.5 h-5.5 rounded-full bg-[#4f46e5] border border-white flex items-center justify-center text-[9px] font-bold text-white uppercase"
+                      >
+                        {member.name.charAt(0)}
+                      </div>
+                    ))}
+                    {board.members && board.members.length > 4 && (
+                      <div className="w-5.5 h-5.5 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[9px] font-bold text-slate-600">
+                        +{board.members.length - 4}
+                      </div>
+                    )}
+                    {(!board.members || board.members.length === 0) && (
+                      <div className="w-5.5 h-5.5 rounded-full bg-slate-100 border border-[#e5e7eb] flex items-center justify-center text-[9px] text-slate-400 uppercase font-semibold">
+                        N/A
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Open Link */}
+                  <span className="text-xs text-[#4f46e5] font-bold flex items-center gap-1 transition-all group-hover:translate-x-1">
+                    Open
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </div>
               </div>
+            );
+          })}
+
+          {/* Create Board Card Button */}
+          <div
+            onClick={() => setShowCreateModal(true)}
+            className="group min-h-[220px] rounded-xl border-2 border-dashed border-[#d1d5db] hover:border-[#4f46e5] hover:bg-indigo-50/10 cursor-pointer flex flex-col items-center justify-center transition-all duration-200 card-transition"
+          >
+            <div className="w-10 h-10 rounded-full border border-slate-200 bg-white group-hover:border-indigo-200 group-hover:bg-indigo-50 flex items-center justify-center mb-3 transition-colors shadow-sm">
+              <Plus className="w-5 h-5 text-slate-400 group-hover:text-[#4f46e5] transition-colors" />
             </div>
-          ))}
+            <span className="text-sm font-bold text-slate-600 group-hover:text-[#4f46e5] transition-colors">
+              New Workspace
+            </span>
+          </div>
+
         </div>
       )}
 
       {/* Create Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-8 shadow-2xl animate-fade-in-scale">
-            <h2 className="text-xl font-bold text-slate-950 mb-6 flex items-center gap-3">
+          <div className="bg-white border border-[#e5e7eb] rounded-2xl max-w-md w-full p-8 shadow-2xl animate-scale-in">
+            <h2 className="text-lg font-bold text-[#111827] mb-6 flex items-center gap-3">
               <div className="p-1.5 rounded-lg bg-indigo-50 border border-indigo-100">
-                <Kanban className="w-5 h-5 text-indigo-600" />
+                <Kanban className="w-5 h-5 text-[#4f46e5]" />
               </div>
               Create Board
             </h2>
             <form onSubmit={handleCreateBoard} className="space-y-5">
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6b7280] mb-2">
                   Board Name
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Website Launch, Sprint Board"
+                  placeholder="e.g. Stripe Billing, Linear Sprint"
                   value={newBoardName}
                   onChange={(e) => setNewBoardName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-slate-800 placeholder-slate-400 transition-all text-sm"
+                  className="w-full px-4 py-2.5 rounded-lg bg-slate-50 border border-[#e5e7eb] focus:bg-white focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5] outline-none text-[#111827] placeholder-slate-400 transition-all text-sm shadow-sm"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6b7280] mb-2">
                   Description
                 </label>
                 <textarea
@@ -206,10 +359,10 @@ export default function BoardList({ onSelectBoard }) {
                   placeholder="Outline the scope, goals, or schedule..."
                   value={newBoardDesc}
                   onChange={(e) => setNewBoardDesc(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-slate-800 placeholder-slate-400 transition-all text-sm resize-none"
+                  className="w-full px-4 py-2.5 rounded-lg bg-slate-50 border border-[#e5e7eb] focus:bg-white focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5] outline-none text-[#111827] placeholder-slate-400 transition-all text-sm resize-none shadow-sm"
                 />
               </div>
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#e5e7eb]">
                 <button
                   type="button"
                   onClick={() => {
@@ -217,13 +370,13 @@ export default function BoardList({ onSelectBoard }) {
                     setNewBoardName('');
                     setNewBoardDesc('');
                   }}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-sm font-semibold transition-all"
+                  className="px-4 py-2 rounded-lg border border-[#e5e7eb] hover:bg-slate-50 text-[#6b7280] text-sm font-semibold transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition-all shadow-sm hover:shadow-md hover:shadow-indigo-500/10 active:scale-95"
+                  className="px-5 py-2.5 rounded-lg bg-[#4f46e5] hover:bg-[#4338ca] text-white text-sm font-bold transition-all shadow-sm active:scale-95"
                 >
                   Create Board
                 </button>

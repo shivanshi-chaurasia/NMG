@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { 
   X, Calendar, Tag as TagIcon, Users, Trash2, 
-  FileText, Clock, AlertCircle, Plus, Check 
+  FileText, Clock, AlertCircle, Plus, Check, ArrowRight, Activity
 } from 'lucide-react';
 
 const PRESETS = [
-  { name: 'Bug', color: '#e11d48' },      // Rose 600
-  { name: 'Feature', color: '#059669' },  // Emerald 600
-  { name: 'Design', color: '#d97706' },   // Amber 600
-  { name: 'Refactor', color: '#7c3aed' }, // Violet 600
-  { name: 'Docs', color: '#0284c7' },     // Sky 600
+  { name: 'Bug', color: '#ef4444' },      // Red
+  { name: 'Feature', color: '#10b981' },  // Green
+  { name: 'Design', color: '#8b5cf6' },   // Purple
+  { name: 'Urgent', color: '#f59e0b' },   // Orange
+  { name: 'Review', color: '#3b82f6' },   // Blue
 ];
 
 export default function CardModal({ card, boardMembers, onClose }) {
@@ -22,6 +22,8 @@ export default function CardModal({ card, boardMembers, onClose }) {
   
   const [tags, setTags] = useState(card.tags || []);
   const [members, setMembers] = useState(card.members || []);
+  const [lists, setLists] = useState([]);
+  const [activeListId, setActiveListId] = useState(card.list_id || '');
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingDesc, setIsEditingDesc] = useState(false);
@@ -29,7 +31,28 @@ export default function CardModal({ card, boardMembers, onClose }) {
   // New tag custom creation states
   const [showAddTag, setShowAddTag] = useState(false);
   const [newTagName, setNewTagName] = useState('');
-  const [newTagColor, setNewTagColor] = useState('#059669'); // Default emerald
+  const [newTagColor, setNewTagColor] = useState('#10b981'); // Default green
+
+  useEffect(() => {
+    fetchBoardLists();
+  }, []);
+
+  const fetchBoardLists = async () => {
+    try {
+      // Find parent board lists to populate the "Move to" dropdown
+      const boardsRes = await api.get('/boards');
+      for (const b of boardsRes.data) {
+        const boardDetailRes = await api.get(`/boards/${b.id}`);
+        const boardLists = boardDetailRes.data.lists || [];
+        if (boardLists.some(l => l.id == card.list_id)) {
+          setLists(boardLists);
+          break;
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching board lists:', err);
+    }
+  };
 
   const handleUpdateField = async (field, value) => {
     try {
@@ -102,6 +125,58 @@ export default function CardModal({ card, boardMembers, onClose }) {
     }
   };
 
+  const handleMoveList = async (listId) => {
+    try {
+      await api.patch(`/cards/${card.id}/move`, {
+        list_id: listId,
+        position: 0,
+      });
+      setActiveListId(listId);
+    } catch (err) {
+      console.error('Error moving card:', err);
+    }
+  };
+
+  // Get active priority based on tag names
+  const getActivePriority = () => {
+    if (tags.some(t => ['high', 'urgent', 'critical', 'bug'].some(k => t.name.toLowerCase().includes(k)))) return 'High';
+    if (tags.some(t => ['medium', 'important', 'warning', 'refactor'].some(k => t.name.toLowerCase().includes(k)))) return 'Medium';
+    if (tags.some(t => ['low', 'minor', 'info', 'docs', 'feature'].some(k => t.name.toLowerCase().includes(k)))) return 'Low';
+    return 'None';
+  };
+
+  const handleSetPriority = async (level) => {
+    // Remove existing priority tags first
+    const priorityKeywords = ['high', 'urgent', 'medium', 'important', 'low', 'minor', 'priority'];
+    const tagsToRemove = tags.filter(t => priorityKeywords.some(k => t.name.toLowerCase().includes(k)));
+    
+    let currentTags = [...tags];
+    for (const tag of tagsToRemove) {
+      try {
+        await api.delete(`/cards/${card.id}/tags/${tag.id}`);
+        currentTags = currentTags.filter(t => t.id !== tag.id);
+      } catch (err) {
+        console.error('Error removing tag:', err);
+      }
+    }
+
+    let newTag = null;
+    if (level === 'High') newTag = { name: 'High Priority', color: '#ef4444' };
+    if (level === 'Medium') newTag = { name: 'Medium Priority', color: '#f59e0b' };
+    if (level === 'Low') newTag = { name: 'Low Priority', color: '#10b981' };
+
+    if (newTag) {
+      try {
+        const response = await api.post(`/cards/${card.id}/tags`, newTag);
+        setTags(response.data.tags);
+      } catch (err) {
+        console.error('Error adding priority tag:', err);
+      }
+    } else {
+      setTags(currentTags);
+    }
+  };
+
   const isOverdue = () => {
     if (!dueDate) return false;
     const due = new Date(dueDate);
@@ -111,12 +186,14 @@ export default function CardModal({ card, boardMembers, onClose }) {
     return due < now;
   };
 
+  const activePriority = getActivePriority();
+
   return (
-    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white border border-slate-200 rounded-3xl max-w-2xl w-full p-8 shadow-2xl animate-fade-in-scale flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white border border-[#e5e7eb] rounded-2xl max-w-2xl w-full p-8 shadow-2xl animate-scale-in flex flex-col max-h-[90vh]">
         
-        {/* Header */}
-        <div className="flex items-start justify-between border-b border-slate-100 pb-4 mb-6">
+        {/* Header: Title inline editable + close */}
+        <div className="flex items-start justify-between border-b border-[#e5e7eb] pb-4 mb-6">
           <div className="flex-1 mr-4">
             {isEditingTitle ? (
               <div className="flex items-center gap-2">
@@ -134,7 +211,7 @@ export default function CardModal({ card, boardMembers, onClose }) {
                       handleUpdateField('title', title);
                     }
                   }}
-                  className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xl font-bold text-slate-800 outline-none w-full focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                  className="bg-slate-50 border border-[#e5e7eb] rounded-lg px-3 py-2 text-lg font-bold text-[#111827] outline-none w-full focus:bg-white focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5]"
                   autoFocus
                 />
                 <button 
@@ -142,16 +219,16 @@ export default function CardModal({ card, boardMembers, onClose }) {
                     setIsEditingTitle(false);
                     handleUpdateField('title', title);
                   }}
-                  className="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-emerald-600 transition-colors shadow-sm"
+                  className="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg text-emerald-600 transition-colors shadow-sm"
                 >
-                  <Check className="w-5 h-5" />
+                  <Check className="w-4 h-4" />
                 </button>
               </div>
             ) : (
               <h2 
                 onClick={() => setIsEditingTitle(true)}
-                className="text-2xl font-extrabold text-slate-900 hover:text-indigo-650 cursor-pointer transition-colors"
-                title="Double click to edit title"
+                className="text-xl font-bold text-[#111827] hover:text-[#4f46e5] cursor-pointer transition-colors"
+                title="Click to edit title"
               >
                 {title}
               </h2>
@@ -160,23 +237,23 @@ export default function CardModal({ card, boardMembers, onClose }) {
           
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-700 transition-all"
+            className="p-1.5 hover:bg-slate-50 rounded-lg text-[#6b7280] hover:text-[#111827] transition-all"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Modal Body Scroll Container */}
+        {/* Two Column Layout Body */}
         <div className="flex-1 overflow-y-auto space-y-6 pr-2 scrollbar-thin">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
             
-            {/* Left Column - Details */}
-            <div className="md:col-span-2 space-y-6">
+            {/* Left Column (60%): Description, Tags, Activity log (fake) */}
+            <div className="md:col-span-3 space-y-6">
               
               {/* Description */}
               <div className="space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-indigo-500" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#6b7280] flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-[#4f46e5]" />
                   Description
                 </h4>
                 {isEditingDesc ? (
@@ -186,7 +263,7 @@ export default function CardModal({ card, boardMembers, onClose }) {
                       placeholder="Add a detailed description for this task card..."
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-500 outline-none text-sm text-slate-800 placeholder-slate-400 transition-all resize-none shadow-sm"
+                      className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-[#e5e7eb] focus:bg-white focus:border-[#4f46e5] outline-none text-xs text-[#111827] placeholder-slate-400 transition-all resize-none shadow-sm"
                       autoFocus
                     />
                     <div className="flex items-center gap-2">
@@ -195,13 +272,13 @@ export default function CardModal({ card, boardMembers, onClose }) {
                           setIsEditingDesc(false);
                           handleUpdateField('description', description);
                         }}
-                        className="px-4 py-2 bg-indigo-605 hover:bg-indigo-705 text-white rounded-xl text-xs font-bold transition-all shadow-sm"
+                        className="px-4 py-2 bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded-md text-xs font-bold transition-all shadow-sm"
                       >
                         Save
                       </button>
                       <button
                         onClick={() => setIsEditingDesc(false)}
-                        className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-xl text-xs font-semibold transition-all"
+                        className="px-4 py-2 border border-[#e5e7eb] hover:bg-slate-50 text-[#6b7280] rounded-md text-xs font-semibold transition-all"
                       >
                         Cancel
                       </button>
@@ -210,7 +287,7 @@ export default function CardModal({ card, boardMembers, onClose }) {
                 ) : (
                   <div 
                     onClick={() => setIsEditingDesc(true)}
-                    className="bg-slate-50/50 hover:bg-slate-50 border border-slate-200/80 p-4 rounded-2xl cursor-pointer min-h-[100px] text-sm text-slate-700 leading-relaxed transition-all shadow-sm"
+                    className="bg-white hover:bg-slate-50/50 border border-[#e5e7eb] p-4 rounded-xl cursor-pointer min-h-[100px] text-xs text-[#6b7280] leading-relaxed transition-all shadow-sm"
                     title="Click to edit description"
                   >
                     {description ? description : <span className="text-slate-400 italic">No description added yet. Click to write details.</span>}
@@ -220,9 +297,9 @@ export default function CardModal({ card, boardMembers, onClose }) {
 
               {/* Tags Section */}
               <div className="space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                  <TagIcon className="w-4 h-4 text-indigo-500" />
-                  Tags / Labels
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#6b7280] flex items-center gap-2">
+                  <TagIcon className="w-4 h-4 text-[#4f46e5]" />
+                  Tags & Labels
                 </h4>
                 <div className="flex flex-wrap gap-2 items-center">
                   {tags.map(tag => (
@@ -247,36 +324,36 @@ export default function CardModal({ card, boardMembers, onClose }) {
                   
                   <button
                     onClick={() => setShowAddTag(!showAddTag)}
-                    className="flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full border border-dashed border-slate-300 hover:border-indigo-500/40 hover:bg-indigo-50/20 text-slate-500 hover:text-indigo-650 transition-all bg-white hover:shadow-sm"
+                    className="flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full border border-dashed border-[#d1d5db] hover:border-[#4f46e5] hover:bg-indigo-50/20 text-[#6b7280] hover:text-[#4f46e5] transition-all bg-white hover:shadow-sm"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-3 h-3" />
                     New Tag
                   </button>
                 </div>
 
                 {/* Create Tag Drawer */}
                 {showAddTag && (
-                  <div className="bg-slate-50/50 border border-slate-200 p-4 rounded-2xl space-y-4 shadow-sm">
+                  <div className="bg-slate-50 border border-[#e5e7eb] p-4 rounded-xl space-y-4 shadow-sm animate-scale-in">
                     <div className="flex flex-col sm:flex-row gap-3">
                       <input
                         type="text"
                         placeholder="Tag name (e.g. Bug, Urgent)"
                         value={newTagName}
                         onChange={(e) => setNewTagName(e.target.value)}
-                        className="flex-1 px-3 py-2 rounded-xl bg-white border border-slate-200 focus:border-indigo-500 outline-none text-xs text-slate-800 shadow-sm"
+                        className="flex-1 px-3 py-2 rounded-lg bg-white border border-[#e5e7eb] focus:border-[#4f46e5] outline-none text-xs text-[#111827] shadow-sm"
                       />
                       <div className="flex items-center gap-2">
-                        <label className="text-xs text-slate-500 font-medium">Color:</label>
+                        <label className="text-xs text-[#6b7280] font-medium">Color:</label>
                         <input
                           type="color"
                           value={newTagColor}
                           onChange={(e) => setNewTagColor(e.target.value)}
-                          className="w-8 h-8 rounded border border-slate-200 bg-transparent cursor-pointer"
+                          className="w-8 h-8 rounded border border-[#e5e7eb] bg-transparent cursor-pointer"
                         />
                       </div>
                     </div>
                     
-                    {/* Presets */}
+                    {/* Presets (Exactly as requested) */}
                     <div className="flex flex-wrap gap-2 items-center">
                       <span className="text-[10px] uppercase font-bold text-slate-400 mr-1">Presets:</span>
                       {PRESETS.map((preset, index) => (
@@ -284,7 +361,7 @@ export default function CardModal({ card, boardMembers, onClose }) {
                           key={index}
                           type="button"
                           onClick={() => handleAddTag(preset.name, preset.color)}
-                          className="text-[10px] font-bold px-2 py-1 rounded-lg border hover:scale-105 transition-transform"
+                          className="text-[10px] font-bold px-2.5 py-1 rounded-md border hover:scale-105 transition-transform"
                           style={{ 
                             backgroundColor: `${preset.color}08`, 
                             borderColor: `${preset.color}25`, 
@@ -296,62 +373,127 @@ export default function CardModal({ card, boardMembers, onClose }) {
                       ))}
                     </div>
 
-                    <div className="flex justify-end gap-2 pt-2 border-t border-slate-200/60">
+                    <div className="flex justify-end gap-2 pt-2 border-t border-[#e5e7eb]">
                       <button
                         onClick={() => setShowAddTag(false)}
-                        className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 text-xs hover:bg-slate-100 transition-colors"
+                        className="px-3 py-1.5 rounded-md border border-[#e5e7eb] text-[#6b7280] text-xs hover:bg-slate-100 transition-colors"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={() => handleAddTag(newTagName, newTagColor)}
-                        className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors shadow-sm"
+                        className="px-3 py-1.5 rounded-md bg-[#4f46e5] hover:bg-[#4338ca] text-white text-xs font-bold transition-colors shadow-sm"
                       >
-                        Save Custom
+                        Save Preset
                       </button>
                     </div>
                   </div>
                 )}
               </div>
+
+              {/* Activity Log (Fake, Stripe/Linear look) */}
+              <div className="space-y-3 pt-4 border-t border-[#e5e7eb]">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#6b7280] flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-[#4f46e5]" />
+                  Activity History
+                </h4>
+                
+                <div className="space-y-3 pl-2">
+                  <div className="flex items-start gap-3 text-xs text-[#6b7280]">
+                    <div className="w-5 h-5 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[9px] font-bold text-[#4f46e5] mt-0.5">
+                      SC
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[#111827]">Shivanshi</span> updated the card description.
+                      <div className="text-[10px] text-slate-400 mt-0.5">2 hours ago</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 text-xs text-[#6b7280]">
+                    <div className="w-5 h-5 rounded-full bg-slate-150 border border-[#e5e7eb] flex items-center justify-center text-[9px] font-bold text-[#6b7280] mt-0.5">
+                      SC
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[#111827]">Shivanshi</span> added a tag label.
+                      <div className="text-[10px] text-slate-400 mt-0.5">1 day ago</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 text-xs text-[#6b7280]">
+                    <div className="w-5 h-5 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[9px] font-bold text-emerald-600 mt-0.5">
+                      +
+                    </div>
+                    <div>
+                      Task card created in this workspace.
+                      <div className="text-[10px] text-slate-400 mt-0.5">2 days ago</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
 
-            {/* Right Column - Controls & Actions */}
-            <div className="space-y-6 md:border-l md:border-slate-100 md:pl-6">
+            {/* Right Column (40%): Controls & Actions */}
+            <div className="md:col-span-2 space-y-6 md:border-l md:border-[#e5e7eb] md:pl-6">
               
-              {/* Due Date */}
+              {/* Priority Selector Dots */}
+              <div className="space-y-2.5">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#6b7280]">Priority</h4>
+                <div className="flex items-center gap-2">
+                  {[
+                    { label: 'Low', color: 'bg-[#10b981]' },
+                    { label: 'Medium', color: 'bg-[#f59e0b]' },
+                    { label: 'High', color: 'bg-[#ef4444]' }
+                  ].map(p => (
+                    <button
+                      key={p.label}
+                      type="button"
+                      onClick={() => handleSetPriority(p.label)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+                        activePriority === p.label 
+                          ? 'border-[#4f46e5] bg-indigo-50/40 text-[#4f46e5] shadow-sm' 
+                          : 'border-[#e5e7eb] bg-white hover:bg-slate-50 text-[#6b7280]'
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${p.color}`}></span>
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Due Date Picker */}
               <div className="space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-indigo-500" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#6b7280] flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" />
                   Due Date
                 </h4>
-                <div className="relative">
-                  <input
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => {
-                      setDueDate(e.target.value);
-                      handleUpdateField('due_date', e.target.value);
-                    }}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-500 outline-none text-xs text-slate-800 cursor-pointer shadow-sm"
-                  />
-                </div>
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => {
+                    setDueDate(e.target.value);
+                    handleUpdateField('due_date', e.target.value);
+                  }}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-[#e5e7eb] focus:bg-white focus:border-[#4f46e5] outline-none text-xs text-[#111827] cursor-pointer shadow-sm"
+                />
                 {dueDate && isOverdue() && (
-                  <div className="flex items-center gap-1.5 text-xs text-rose-700 font-bold bg-rose-50 border border-rose-100 p-2.5 rounded-xl mt-1 shadow-sm">
-                    <AlertCircle className="w-4 h-4" />
+                  <div className="flex items-center gap-1.5 text-xs text-rose-700 font-bold bg-rose-50 border border-rose-100 p-2 rounded-lg mt-1">
+                    <AlertCircle className="w-3.5 h-3.5" />
                     <span>Overdue Task!</span>
                   </div>
                 )}
               </div>
 
-              {/* Members Assign */}
-              <div className="space-y-2.5">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                  <Users className="w-4 h-4 text-indigo-500" />
-                  Assign Members
+              {/* Assignee Section */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#6b7280] flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5" />
+                  Assignee
                 </h4>
-                <div className="max-h-[160px] overflow-y-auto space-y-1.5 border border-slate-200/80 p-3 rounded-2xl bg-slate-50/50 scrollbar-thin">
+                <div className="max-h-[140px] overflow-y-auto space-y-1 p-2 border border-[#e5e7eb] rounded-xl bg-slate-50/30 scrollbar-thin">
                   {boardMembers.length === 0 ? (
-                    <p className="text-slate-400 text-xs italic p-1">No board members yet. Invite them in the board view.</p>
+                    <p className="text-slate-400 text-[10px] italic p-1">No members added yet.</p>
                   ) : (
                     boardMembers.map(member => {
                       const isAssigned = members.some(m => m.id === member.id);
@@ -359,19 +501,19 @@ export default function CardModal({ card, boardMembers, onClose }) {
                         <div 
                           key={member.id}
                           onClick={() => handleToggleMember(member.id)}
-                          className={`flex items-center justify-between p-2 rounded-xl border text-xs font-medium cursor-pointer transition-all duration-200 select-none ${
+                          className={`flex items-center justify-between p-2 rounded-lg border text-xs font-semibold cursor-pointer transition-all duration-150 select-none ${
                             isAssigned 
-                              ? 'bg-indigo-50 border-indigo-200/50 text-indigo-750 shadow-sm' 
-                              : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-800 shadow-sm'
+                              ? 'bg-indigo-50 border-indigo-200/50 text-[#4f46e5] shadow-sm' 
+                              : 'bg-white border-[#e5e7eb] hover:bg-slate-50 text-[#6b7280]'
                           }`}
                         >
                           <div className="flex items-center gap-2">
-                            <div className="w-5.5 h-5.5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[9px] font-bold text-slate-700 uppercase">
+                            <div className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[8px] font-bold text-slate-700 uppercase">
                               {member.name.charAt(0)}
                             </div>
-                            <span className="truncate max-w-[110px]">{member.name}</span>
+                            <span className="truncate max-w-[100px]">{member.name}</span>
                           </div>
-                          {isAssigned && <Check className="w-3.5 h-3.5 text-indigo-650" />}
+                          {isAssigned && <Check className="w-3 h-3 text-[#4f46e5]" />}
                         </div>
                       );
                     })
@@ -379,11 +521,31 @@ export default function CardModal({ card, boardMembers, onClose }) {
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="pt-4 border-t border-slate-100">
+              {/* Move to Dropdown */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#6b7280] flex items-center gap-1.5">
+                  <ArrowRight className="w-3.5 h-3.5" />
+                  Move to Column
+                </h4>
+                <select
+                  value={activeListId}
+                  onChange={(e) => handleMoveList(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-[#e5e7eb] focus:bg-white focus:border-[#4f46e5] outline-none text-xs text-[#111827] cursor-pointer shadow-sm"
+                >
+                  <option value="" disabled>Select column list...</option>
+                  {lists.map(list => (
+                    <option key={list.id} value={list.id}>
+                      {list.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Delete Button (red, outlined) */}
+              <div className="pt-4 border-t border-[#e5e7eb]">
                 <button
                   onClick={handleDeleteCard}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-rose-200 hover:bg-rose-50 text-rose-600 hover:text-rose-700 font-bold text-xs transition-all active:scale-[0.98] shadow-sm"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[#ef4444] hover:bg-rose-50 text-[#ef4444] font-bold text-xs transition-all active:scale-[0.98] shadow-sm"
                 >
                   <Trash2 className="w-4 h-4" />
                   Delete Card

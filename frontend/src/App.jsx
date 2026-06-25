@@ -1,71 +1,78 @@
 import React, { useState } from 'react';
 import BoardList from './components/BoardList';
 import BoardView from './components/BoardView';
-import { Kanban, HelpCircle, Layers, Settings, User } from 'lucide-react';
+import { Kanban, Search, Bell, Zap } from 'lucide-react';
 
 export default function App() {
   const [currentBoardId, setCurrentBoardId] = useState(null);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f8fafc] text-slate-800 selection:bg-indigo-500/10 selection:text-indigo-600">
+    <div className="min-h-screen flex flex-col bg-[#fafafa] text-[#111827]">
       {/* Top Navbar */}
-      <header className="border-b border-slate-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-45 h-16 bg-white border-b border-[#e5e7eb] shadow-[0_1px_3px_rgba(0,0,0,0.08)] backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
           
-          {/* Logo Section */}
+          {/* Left Area: Logo with lightning bolt icon & gradient text */}
           <div 
             onClick={() => setCurrentBoardId(null)}
-            className="flex items-center gap-3 cursor-pointer group"
+            className="flex items-center gap-2 cursor-pointer group"
           >
-            <div className="p-2 rounded-xl bg-indigo-50 border border-indigo-100/60 group-hover:bg-indigo-100/80 group-hover:border-indigo-200 transition-all duration-300 shadow-sm">
-              <Kanban className="w-5 h-5 text-indigo-600" />
+            <div className="p-1.5 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center transition-all duration-300 group-hover:bg-indigo-100/80">
+              <Zap className="w-5 h-5 text-[#4f46e5] fill-[#4f46e5]/10 animate-pulse" />
             </div>
-            <div className="flex items-center">
-              <span className="font-bold tracking-tight text-lg text-slate-900 group-hover:text-indigo-600 transition-colors">
-                ZenBoard
-              </span>
-              <span className="ml-2 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider uppercase bg-indigo-50 text-indigo-600 border border-indigo-100/50">
-                PRO
-              </span>
-            </div>
+            <span className="font-extrabold tracking-tight text-xl bg-gradient-to-r from-[#667eea] to-[#764ba2] bg-clip-text text-transparent transition-all">
+              ZenBoard
+            </span>
           </div>
 
-          {/* Center Navigation Links (SaaS look) */}
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+          {/* Center Navigation Links */}
+          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-[#6b7280]">
             <button 
               onClick={() => setCurrentBoardId(null)}
-              className={`transition-colors hover:text-indigo-600 ${!currentBoardId ? 'text-indigo-600 font-semibold' : ''}`}
+              className={`transition-colors hover:text-[#4f46e5] ${!currentBoardId ? 'text-[#4f46e5]' : ''}`}
             >
               Workspace
             </button>
-            <a href="#" className="transition-colors hover:text-indigo-600">Templates</a>
-            <a href="#" className="transition-colors hover:text-indigo-600">Integrations</a>
-            <a href="#" className="transition-colors hover:text-indigo-600">Documentation</a>
+            <button className="transition-colors hover:text-[#4f46e5]">Projects</button>
+            <button className="transition-colors hover:text-[#4f46e5]">Team</button>
+            <button className="transition-colors hover:text-[#4f46e5]">Analytics</button>
           </nav>
 
-          {/* Right Section: Status & Profile */}
+          {/* Right Area: Search, Bell, Upgrade Button, Avatar */}
           <div className="flex items-center gap-4">
-            {/* Status indicator */}
-            <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200/40 text-[11px] font-medium text-slate-600">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Sync Active</span>
+            
+            {/* Fake Search Bar */}
+            <div className="relative hidden sm:block w-48 lg:w-64">
+              <span className="absolute inset-y-0 left-3 flex items-center text-slate-400">
+                <Search className="w-4 h-4" />
+              </span>
+              <input
+                type="text"
+                placeholder="Search..."
+                disabled
+                className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-[#e5e7eb] bg-slate-50 text-xs text-slate-400 cursor-not-allowed outline-none focus:border-[#4f46e5]"
+              />
             </div>
 
-            {/* Icons / Profile */}
-            <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
-              <button className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-colors" title="Settings">
-                <Settings className="w-4 h-4" />
-              </button>
-              <button className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-colors" title="Help Docs">
-                <HelpCircle className="w-4 h-4" />
-              </button>
-              <div 
-                className="ml-2 w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-600 border border-indigo-200 text-white font-bold flex items-center justify-center text-xs shadow-sm cursor-pointer hover:ring-2 hover:ring-indigo-100 transition-all"
-                title="Shivanshi (User)"
-              >
-                SC
-              </div>
+            {/* Bell Icon with notification dot */}
+            <div className="relative p-1.5 text-[#6b7280] hover:text-[#111827] hover:bg-slate-100 rounded-lg cursor-pointer transition-colors">
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#ef4444] border-2 border-white"></span>
             </div>
+
+            {/* Upgrade Button */}
+            <button className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white text-xs font-bold shadow-sm hover:opacity-95 btn-transition btn-hover active:scale-[0.98]">
+              Upgrade
+            </button>
+
+            {/* Avatar SC */}
+            <div 
+              className="w-8 h-8 rounded-full bg-[#4f46e5] text-white font-bold flex items-center justify-center text-xs shadow-sm hover:ring-2 hover:ring-indigo-100 transition-all cursor-pointer"
+              title="Shivanshi (SC)"
+            >
+              SC
+            </div>
+
           </div>
         </div>
       </header>
