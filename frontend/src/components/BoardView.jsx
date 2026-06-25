@@ -8,6 +8,30 @@ import {
 } from 'lucide-react';
 import CardModal from './CardModal';
 
+// Helper to determine colored left border based on tag priorities
+const getPriorityStyle = (card) => {
+  if (!card.tags || card.tags.length === 0) return {};
+  
+  // Look for priority-like tags first
+  const highPriority = card.tags.find(t => 
+    ['high', 'urgent', 'critical', 'bug'].some(k => t.name.toLowerCase().includes(k))
+  );
+  if (highPriority) return { borderLeft: `4px solid ${highPriority.color || '#f43f5e'}` };
+  
+  const medPriority = card.tags.find(t => 
+    ['medium', 'important', 'warning', 'refactor', 'design'].some(k => t.name.toLowerCase().includes(k))
+  );
+  if (medPriority) return { borderLeft: `4px solid ${medPriority.color || '#f59e0b'}` };
+  
+  const lowPriority = card.tags.find(t => 
+    ['low', 'feature', 'docs', 'minor', 'info'].some(k => t.name.toLowerCase().includes(k))
+  );
+  if (lowPriority) return { borderLeft: `4px solid ${lowPriority.color || '#10b981'}` };
+  
+  // Fallback to the first tag's color
+  return { borderLeft: `4px solid ${card.tags[0].color || '#6366f1'}` };
+};
+
 // Droppable List wrapper
 function DroppableListContainer({ listId, children }) {
   const { setNodeRef, isOver } = useDroppable({
@@ -17,8 +41,8 @@ function DroppableListContainer({ listId, children }) {
   return (
     <div 
       ref={setNodeRef} 
-      className={`flex-1 flex flex-col gap-3 min-h-[300px] rounded-xl p-1.5 transition-colors duration-200 ${
-        isOver ? 'bg-indigo-950/20 border border-dashed border-indigo-500/30' : 'bg-transparent'
+      className={`flex-1 flex flex-col gap-3 min-h-[300px] rounded-xl p-1.5 transition-all duration-200 ${
+        isOver ? 'bg-indigo-50/50 border border-dashed border-indigo-300' : 'bg-transparent border border-dashed border-transparent'
       }`}
     >
       {children}
@@ -35,8 +59,9 @@ function DraggableCardItem({ card, onClick }) {
 
   const style = {
     transform: transform ? CSS.Translate.toString(transform) : undefined,
-    opacity: isDragging ? 0.3 : 1,
+    opacity: isDragging ? 0.35 : 1,
     zIndex: isDragging ? 50 : 1,
+    ...getPriorityStyle(card)
   };
 
   // Determine if card is overdue
@@ -44,7 +69,6 @@ function DraggableCardItem({ card, onClick }) {
     if (!card.due_date) return false;
     const due = new Date(card.due_date);
     const now = new Date();
-    // Normalize times (remove hours/minutes/seconds) to check date
     due.setHours(0,0,0,0);
     now.setHours(0,0,0,0);
     return due < now;
@@ -60,19 +84,19 @@ function DraggableCardItem({ card, onClick }) {
     <div
       ref={setNodeRef}
       style={style}
-      class="group relative border border-slate-850 hover:border-slate-700 bg-slate-900/60 hover:bg-slate-900 rounded-xl p-4 transition-all duration-200 hover:shadow-md cursor-pointer flex flex-col gap-3 select-none"
+      className="group relative border border-slate-200/80 bg-white rounded-xl p-4 transition-all duration-200 hover:border-indigo-400 hover:shadow-md cursor-pointer flex flex-col gap-3 select-none hover:-translate-y-0.5"
       onClick={() => onClick(card)}
     >
       {/* Top row: tags and drag handle */}
-      <div class="flex items-start justify-between gap-2">
-        <div class="flex flex-wrap gap-1">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-wrap gap-1">
           {card.tags && card.tags.map(tag => (
             <span 
               key={tag.id} 
-              className="text-[10px] font-bold px-2 py-0.5 rounded-full border"
+              className="text-[9px] font-bold px-2 py-0.5 rounded-full border tracking-wide"
               style={{ 
-                backgroundColor: `${tag.color}15`, 
-                borderColor: `${tag.color}30`, 
+                backgroundColor: `${tag.color}08`, 
+                borderColor: `${tag.color}25`, 
                 color: tag.color 
               }}
             >
@@ -86,34 +110,34 @@ function DraggableCardItem({ card, onClick }) {
           {...listeners} 
           {...attributes} 
           onClick={(e) => e.stopPropagation()} // Stop modal from triggering when grabbing handle
-          class="text-slate-600 hover:text-slate-300 p-1 hover:bg-slate-800 rounded cursor-grab active:cursor-grabbing transition-colors"
+          className="text-slate-400 hover:text-slate-700 hover:bg-slate-50 p-1 rounded cursor-grab active:cursor-grabbing transition-colors"
         >
           <GripVertical className="w-3.5 h-3.5" />
         </div>
       </div>
 
       {/* Card Title */}
-      <h4 class="font-semibold text-slate-200 text-sm leading-tight group-hover:text-white transition-colors">
+      <h4 className="font-semibold text-slate-800 text-sm leading-snug group-hover:text-indigo-650 transition-colors">
         {card.title}
       </h4>
 
       {/* Card Description Snippet */}
       {card.description && (
-        <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+        <p className="text-xs text-slate-555 line-clamp-2 leading-relaxed">
           {card.description}
         </p>
       )}
 
       {/* Footer row: due date and members */}
       {(card.due_date || (card.members && card.members.length > 0)) && (
-        <div class="flex items-center justify-between border-t border-slate-850/60 pt-3 mt-1 text-xs">
+        <div className="flex items-center justify-between border-t border-slate-100 pt-3 mt-1 text-xs">
           {/* Due date */}
           {card.due_date ? (
             <div 
-              className={`flex items-center gap-1 font-medium ${
+              className={`flex items-center gap-1 font-semibold ${
                 isOverdue() 
-                  ? 'text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-lg' 
-                  : 'text-slate-400 bg-slate-800/40 border border-slate-800/60 px-2 py-0.5 rounded-lg'
+                  ? 'text-rose-650 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-lg' 
+                  : 'text-slate-500 bg-slate-50 border border-slate-200/60 px-2 py-0.5 rounded-lg'
               }`}
             >
               <Clock className="w-3 h-3" />
@@ -122,12 +146,12 @@ function DraggableCardItem({ card, onClick }) {
           ) : <div />}
 
           {/* Members list */}
-          <div class="flex -space-x-1.5 overflow-hidden">
+          <div className="flex -space-x-1.5 overflow-hidden">
             {card.members && card.members.map(member => (
               <div 
                 key={member.id}
                 title={member.name}
-                class="w-5 h-5 rounded-full bg-indigo-600/80 border border-slate-900 flex items-center justify-center text-[9px] font-bold text-white uppercase"
+                className="w-5.5 h-5.5 rounded-full bg-indigo-500 border border-white flex items-center justify-center text-[9px] font-bold text-white uppercase shadow-sm"
               >
                 {member.name.charAt(0)}
               </div>
@@ -374,49 +398,49 @@ export default function BoardView({ boardId, onBack }) {
 
   if (loading || !board) {
     return (
-      <div class="flex-1 flex flex-col items-center justify-center min-h-[400px]">
-        <div class="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-        <p class="mt-4 text-slate-400 font-medium">Loading board details...</p>
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
+        <div className="w-12 h-12 border-4 border-indigo-650 border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-slate-500 font-medium text-sm">Loading board details...</p>
       </div>
     );
   }
 
   return (
-    <div class="flex-1 flex flex-col min-h-0 w-full">
+    <div className="flex-1 flex flex-col min-h-0 w-full animate-fade-in-scale">
       {/* Board Header */}
-      <div class="border-b border-slate-900 bg-slate-950/40 backdrop-blur-md px-6 py-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div class="flex items-start gap-4">
+      <div className="border-b border-slate-200/85 bg-white px-6 py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+        <div className="flex items-start gap-4">
           <button 
             onClick={onBack}
-            class="p-2.5 rounded-xl border border-slate-800 hover:bg-slate-900 text-slate-400 hover:text-white transition-all duration-200"
+            className="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-all duration-200 shadow-sm"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h2 class="text-2xl font-bold text-slate-100 flex items-center gap-3">
+            <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
               {board.name}
             </h2>
-            <p class="text-sm text-slate-400 mt-1 max-w-xl">
+            <p className="text-xs md:text-sm text-slate-500 mt-1 max-w-xl">
               {board.description || 'No description provided.'}
             </p>
           </div>
         </div>
 
         {/* Member Action / Section */}
-        <div class="flex items-center gap-3 self-end md:self-auto">
+        <div className="flex items-center gap-4 self-end md:self-auto">
           {/* List of members preview */}
-          <div class="flex items-center -space-x-2">
+          <div className="flex items-center -space-x-2">
             {board.members && board.members.slice(0, 5).map(member => (
               <div 
                 key={member.id}
                 title={`${member.name} (${member.email})`}
-                class="w-8 h-8 rounded-full bg-slate-850 hover:bg-indigo-600 border border-slate-900 flex items-center justify-center text-xs font-bold text-slate-200 hover:text-white uppercase transition-colors"
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-indigo-600 border-2 border-white flex items-center justify-center text-xs font-bold text-slate-600 hover:text-white uppercase transition-all duration-150 shadow-sm"
               >
                 {member.name.charAt(0)}
               </div>
             ))}
             {board.members && board.members.length > 5 && (
-              <div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-900 flex items-center justify-center text-xs font-semibold text-slate-400">
+              <div className="w-8 h-8 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-xs font-bold text-slate-600 shadow-sm">
                 +{board.members.length - 5}
               </div>
             )}
@@ -424,9 +448,9 @@ export default function BoardView({ boardId, onBack }) {
 
           <button
             onClick={() => setShowAddMember(true)}
-            class="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-300 hover:text-white border border-slate-800 font-semibold text-sm transition-all"
+            className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold text-xs transition-all shadow-sm active:scale-95"
           >
-            <UserPlus className="w-4 h-4" />
+            <UserPlus className="w-4 h-4 text-slate-550" />
             Add Member
           </button>
         </div>
@@ -434,63 +458,68 @@ export default function BoardView({ boardId, onBack }) {
 
       {/* Drag & Drop Board Columns Wrapper */}
       <DndContext onDragEnd={handleDragEnd}>
-        <div class="flex-1 overflow-x-auto flex items-start gap-5 p-6 min-h-0 bg-slate-950/20">
+        <div className="flex-1 overflow-x-auto flex items-start gap-5 p-6 min-h-0 bg-slate-50/50">
           
           {/* Lists loop */}
           {lists.map(list => (
             <div 
               key={list.id} 
-              class="w-[290px] max-h-full flex-shrink-0 bg-slate-900/40 border border-slate-850/80 rounded-2xl flex flex-col p-4 shadow-sm backdrop-blur-sm"
+              className="w-[290px] max-h-full flex-shrink-0 bg-[#f1f5f9]/75 border border-slate-200/50 rounded-2xl flex flex-col p-4 shadow-sm"
             >
               {/* List Header */}
-              <div class="flex items-center justify-between mb-4 group/list-head">
+              <div className="flex items-center justify-between mb-4 group/list-head">
                 {editingListId === list.id ? (
-                  <div class="flex items-center gap-1 flex-1">
+                  <div className="flex items-center gap-1 flex-1">
                     <input
                       type="text"
                       value={editingListName}
                       onChange={(e) => setEditingListName(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleUpdateListTitle(list.id)}
-                      class="bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-sm font-semibold text-slate-200 outline-none w-full focus:border-indigo-500"
+                      className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-sm font-semibold text-slate-800 outline-none w-full focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                       autoFocus
                     />
                     <button 
                       onClick={() => handleUpdateListTitle(list.id)}
-                      class="p-1 text-emerald-400 hover:bg-slate-800 rounded"
+                      className="p-1 text-emerald-600 hover:bg-slate-200/80 rounded"
                     >
                       <Check className="w-4 h-4" />
                     </button>
                     <button 
                       onClick={() => setEditingListId(null)}
-                      class="p-1 text-slate-400 hover:bg-slate-800 rounded"
+                      className="p-1 text-slate-500 hover:bg-slate-200/80 rounded"
                     >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                 ) : (
                   <>
-                    <h3 
-                      onDoubleClick={() => {
-                        setEditingListId(list.id);
-                        setEditingListName(list.name);
-                      }}
-                      class="font-bold text-slate-200 text-sm cursor-pointer select-none hover:text-indigo-400 transition-colors flex-1"
-                    >
-                      {list.name}
-                    </h3>
-                    <div class="flex items-center opacity-0 group-hover/list-head:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <h3 
+                        onDoubleClick={() => {
+                          setEditingListId(list.id);
+                          setEditingListName(list.name);
+                        }}
+                        className="font-bold text-slate-800 text-sm cursor-pointer select-none hover:text-indigo-600 transition-colors truncate"
+                      >
+                        {list.name}
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-full bg-slate-200/60 text-slate-500 text-[10px] font-bold">
+                        {list.cards?.length || 0}
+                      </span>
+                    </div>
+                    <div className="flex items-center opacity-0 group-hover/list-head:opacity-100 transition-opacity ml-2">
                       <button
                         onClick={() => {
                           setEditingListId(list.id);
                           setEditingListName(list.name);
                         }}
-                        class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-200"
+                        className="p-1 hover:bg-slate-200/80 rounded text-slate-400 hover:text-slate-700 transition-colors"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => handleDeleteList(list.id)}
-                        class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-rose-400"
+                        className="p-1 hover:bg-rose-50 rounded text-slate-400 hover:text-rose-600 transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -500,7 +529,7 @@ export default function BoardView({ boardId, onBack }) {
               </div>
 
               {/* List Cards Droppable Zone */}
-              <div class="overflow-y-auto flex-1 mb-2 pr-0.5">
+              <div className="overflow-y-auto flex-1 mb-2 pr-0.5 scrollbar-thin">
                 <DroppableListContainer listId={list.id}>
                   {list.cards && list.cards.map(card => (
                     <DraggableCardItem 
@@ -514,7 +543,7 @@ export default function BoardView({ boardId, onBack }) {
 
               {/* List Footer / Add Card */}
               {addingCardListId === list.id ? (
-                <form onSubmit={(e) => handleCreateCard(e, list.id)} class="mt-2 space-y-2">
+                <form onSubmit={(e) => handleCreateCard(e, list.id)} className="mt-2 space-y-2">
                   <textarea
                     rows="2"
                     placeholder="Enter a title for this card..."
@@ -527,20 +556,20 @@ export default function BoardView({ boardId, onBack }) {
                         handleCreateCard(e, list.id);
                       }
                     }}
-                    class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 focus:border-indigo-500 outline-none text-xs text-slate-200 placeholder-slate-600 transition-all resize-none"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-xs text-slate-800 placeholder-slate-400 transition-all resize-none shadow-sm"
                     autoFocus
                   />
-                  <div class="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <button
                       type="submit"
-                      class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition-all"
+                      className="px-3.5 py-1.5 bg-indigo-650 hover:bg-indigo-750 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
                     >
                       Add Card
                     </button>
                     <button
                       type="button"
                       onClick={() => setAddingCardListId(null)}
-                      class="p-1.5 text-slate-400 hover:bg-slate-800 rounded-lg"
+                      className="p-1.5 text-slate-550 hover:bg-slate-200/80 rounded-lg transition-colors"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -552,7 +581,7 @@ export default function BoardView({ boardId, onBack }) {
                     setAddingCardListId(list.id);
                     setNewCardTitle('');
                   }}
-                  class="mt-2 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-slate-800 hover:border-indigo-500/30 hover:bg-indigo-950/10 text-slate-400 hover:text-indigo-400 text-xs font-semibold transition-all"
+                  className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-slate-300 hover:border-indigo-500/40 hover:bg-indigo-50/30 text-slate-500 hover:text-indigo-650 text-xs font-semibold transition-all duration-200 bg-white/40 hover:shadow-sm"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add Task Card
@@ -563,28 +592,28 @@ export default function BoardView({ boardId, onBack }) {
 
           {/* Add List Column */}
           {showAddList ? (
-            <div class="w-[290px] flex-shrink-0 bg-slate-900/60 border border-slate-850/80 rounded-2xl p-4 flex flex-col shadow-sm">
-              <form onSubmit={handleCreateList} class="space-y-3">
+            <div className="w-[290px] flex-shrink-0 bg-white border border-slate-200 rounded-2xl p-4 flex flex-col shadow-sm">
+              <form onSubmit={handleCreateList} className="space-y-3">
                 <input
                   type="text"
                   required
                   placeholder="Enter list title..."
                   value={newListName}
                   onChange={(e) => setNewListName(e.target.value)}
-                  class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 focus:border-indigo-500 outline-none text-sm text-slate-200 placeholder-slate-600 transition-all"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-500 outline-none text-sm text-slate-800 placeholder-slate-400 transition-all"
                   autoFocus
                 />
-                <div class="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <button
                     type="submit"
-                    class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition-all"
+                    className="px-4 py-2 bg-indigo-605 hover:bg-indigo-705 text-white rounded-xl text-xs font-bold transition-all shadow-sm"
                   >
                     Save List
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowAddList(false)}
-                    class="p-2 text-slate-400 hover:bg-slate-800 rounded-xl"
+                    className="p-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -597,7 +626,7 @@ export default function BoardView({ boardId, onBack }) {
                 setShowAddList(true);
                 setNewListName('');
               }}
-              class="w-[290px] flex-shrink-0 flex items-center justify-center gap-2 py-4 rounded-2xl border border-dashed border-slate-800 hover:border-indigo-500/30 hover:bg-slate-900/10 text-slate-400 hover:text-indigo-400 font-bold text-sm transition-all duration-300 h-16 self-start"
+              className="w-[290px] flex-shrink-0 flex items-center justify-center gap-2 py-4 rounded-2xl border border-dashed border-slate-300 hover:border-indigo-550/40 hover:bg-indigo-50/15 text-slate-500 hover:text-indigo-650 font-bold text-sm transition-all duration-300 h-16 self-start bg-white/40 hover:shadow-sm"
             >
               <Plus className="w-4 h-4" />
               Add Column List
@@ -609,15 +638,17 @@ export default function BoardView({ boardId, onBack }) {
 
       {/* Add Board Member Modal */}
       {showAddMember && (
-        <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <h2 class="text-2xl font-bold text-slate-100 mb-6 flex items-center gap-3">
-              <UserPlus className="w-6 h-6 text-indigo-500" />
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-8 shadow-2xl animate-fade-in-scale">
+            <h2 className="text-xl font-bold text-slate-950 mb-6 flex items-center gap-3">
+              <div className="p-1.5 rounded-lg bg-indigo-50 border border-indigo-100">
+                <UserPlus className="w-5 h-5 text-indigo-600" />
+              </div>
               Invite Member
             </h2>
-            <form onSubmit={handleAddMember} class="space-y-5">
+            <form onSubmit={handleAddMember} className="space-y-5">
               <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
                   Name
                 </label>
                 <input
@@ -626,11 +657,11 @@ export default function BoardView({ boardId, onBack }) {
                   placeholder="e.g. John Doe"
                   value={newMemberName}
                   onChange={(e) => setNewMemberName(e.target.value)}
-                  class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-slate-200 placeholder-slate-600 transition-all text-sm"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-slate-800 placeholder-slate-450 transition-all text-sm"
                 />
               </div>
               <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
                   Email Address
                 </label>
                 <input
@@ -639,10 +670,10 @@ export default function BoardView({ boardId, onBack }) {
                   placeholder="e.g. john@example.com"
                   value={newMemberEmail}
                   onChange={(e) => setNewMemberEmail(e.target.value)}
-                  class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-slate-200 placeholder-slate-600 transition-all text-sm"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-slate-800 placeholder-slate-450 transition-all text-sm"
                 />
               </div>
-              <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-800/60">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => {
@@ -650,13 +681,13 @@ export default function BoardView({ boardId, onBack }) {
                     setNewMemberName('');
                     setNewMemberEmail('');
                   }}
-                  class="px-4 py-2.5 rounded-xl border border-slate-800 hover:bg-slate-800 text-slate-400 text-sm font-semibold transition-all"
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-650 text-sm font-semibold transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all hover:shadow-lg hover:shadow-indigo-500/25 active:scale-95"
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition-all shadow-sm active:scale-95"
                 >
                   Add Member
                 </button>
