@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { 
   Kanban, Plus, Trash2, Users, ArrowRight, Play, Trophy, 
-  Activity, Star, Award, Shield, CheckCircle2 
+  Activity, Star, Award, Shield, CheckCircle2, X, ChevronLeft, ChevronRight, Sparkles, Layout, Target
 } from 'lucide-react';
 
 const GRADIENTS = [
@@ -13,6 +13,37 @@ const GRADIENTS = [
   'from-[#fc4a1a] to-[#f7b733]',
 ];
 
+const DEMO_SLIDES = [
+  {
+    title: "Welcome to ZenBoard",
+    description: "Your team's central command center for shipping high-quality software, tracking metrics, and automating standard tasks.",
+    icon: Sparkles,
+    color: "text-indigo-600 bg-indigo-50 border-indigo-100",
+    feature: "Enterprise-grade Kanban dashboard"
+  },
+  {
+    title: "High-Velocity Kanban columns",
+    description: "Organize tasks, align lists, and drag cards with smooth layouts and drag-and-drop feedback.",
+    icon: Layout,
+    color: "text-emerald-600 bg-emerald-50 border-emerald-100",
+    feature: "Drag-and-drop list columns"
+  },
+  {
+    title: "Priority Tag left borders",
+    description: "ZenBoard dynamically colors task cards with border highlights matching Critical/High, Medium, and Low priorities.",
+    icon: Target,
+    color: "text-amber-600 bg-amber-50 border-amber-100",
+    feature: "Smart color priorities"
+  },
+  {
+    title: "Team Sync & Collaboration",
+    description: "Invite core developers, assign checklists, set deadlines, and monitor real-time task statuses in one clean view.",
+    icon: Users,
+    color: "text-blue-600 bg-blue-50 border-blue-100",
+    feature: "Seamless member management"
+  }
+];
+
 export default function BoardList({ onSelectBoard }) {
   const [boards, setBoards] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +52,10 @@ export default function BoardList({ onSelectBoard }) {
   const [newBoardName, setNewBoardName] = useState('');
   const [newBoardDesc, setNewBoardDesc] = useState('');
   const [activeTab, setActiveTab] = useState('All Boards');
+
+  // Watch Demo slideshow states
+  const [showDemoModal, setShowDemoModal] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
     fetchBoards();
@@ -72,6 +107,14 @@ export default function BoardList({ onSelectBoard }) {
     }
   };
 
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % DEMO_SLIDES.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + DEMO_SLIDES.length) % DEMO_SLIDES.length);
+  };
+
   if (loading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
@@ -113,6 +156,7 @@ export default function BoardList({ onSelectBoard }) {
               Create New Board
             </button>
             <button
+              onClick={() => { setShowDemoModal(true); setCurrentSlide(0); }}
               className="flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-white border border-[#e5e7eb] hover:bg-[#fafafa] text-[#111827] font-bold text-sm btn-transition shadow-sm hover:border-[#d1d5db]"
             >
               <Play className="w-4 h-4 text-[#6b7280] fill-[#6b7280]/20" />
@@ -123,7 +167,6 @@ export default function BoardList({ onSelectBoard }) {
 
         {/* Right Side Stats cards */}
         <div className="flex flex-col gap-4 w-full sm:w-80 relative z-10 shrink-0 select-none">
-          {/* Card 1 */}
           <div className="bg-white border border-[#e5e7eb] rounded-xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
             <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
               <CheckCircle2 className="w-5 h-5" />
@@ -137,7 +180,6 @@ export default function BoardList({ onSelectBoard }) {
             </div>
           </div>
 
-          {/* Card 2 */}
           <div className="bg-white border border-[#e5e7eb] rounded-xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
             <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[#4f46e5]">
               <Kanban className="w-5 h-5" />
@@ -148,7 +190,6 @@ export default function BoardList({ onSelectBoard }) {
             </div>
           </div>
 
-          {/* Card 3 */}
           <div className="bg-white border border-[#e5e7eb] rounded-xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
             <div className="w-10 h-10 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
               <Trophy className="w-5 h-5" />
@@ -244,7 +285,6 @@ export default function BoardList({ onSelectBoard }) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           
-          {/* Active board cards */}
           {boards.map((board, index) => {
             const gradientClass = GRADIENTS[index % GRADIENTS.length];
             return (
@@ -253,10 +293,8 @@ export default function BoardList({ onSelectBoard }) {
                 onClick={() => onSelectBoard(board.id)}
                 className="group relative border border-[#e5e7eb] rounded-xl bg-white overflow-hidden card-transition card-hover cursor-pointer shadow-sm flex flex-col justify-between min-h-[220px]"
               >
-                {/* Colored unique gradient banner */}
                 <div className={`h-2.5 bg-gradient-to-r ${gradientClass} w-full`}></div>
 
-                {/* Card Delete action */}
                 <button
                   onClick={(e) => handleDeleteBoard(e, board.id)}
                   className="absolute top-6 right-4 p-1.5 rounded-lg bg-white/95 border border-[#e5e7eb] text-slate-400 hover:text-rose-600 hover:bg-rose-50 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 shadow-sm"
@@ -265,7 +303,6 @@ export default function BoardList({ onSelectBoard }) {
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
 
-                {/* Body */}
                 <div className="p-5 flex-1">
                   <h3 className="text-base font-bold text-[#111827] group-hover:text-[#4f46e5] transition-colors flex items-center gap-2 mb-2 pr-6">
                     {board.name}
@@ -275,9 +312,7 @@ export default function BoardList({ onSelectBoard }) {
                   </p>
                 </div>
 
-                {/* Footer */}
                 <div className="px-5 py-4 border-t border-[#e5e7eb] flex items-center justify-between mt-auto bg-slate-50/50">
-                  {/* Staged member avatars */}
                   <div className="flex -space-x-1.5 overflow-hidden">
                     {board.members && board.members.slice(0, 4).map(member => (
                       <div 
@@ -300,7 +335,6 @@ export default function BoardList({ onSelectBoard }) {
                     )}
                   </div>
 
-                  {/* Open Link */}
                   <span className="text-xs text-[#4f46e5] font-bold flex items-center gap-1 transition-all group-hover:translate-x-1">
                     Open
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -310,7 +344,6 @@ export default function BoardList({ onSelectBoard }) {
             );
           })}
 
-          {/* Create Board Card Button */}
           <div
             onClick={() => setShowCreateModal(true)}
             className="group min-h-[220px] rounded-xl border-2 border-dashed border-[#d1d5db] hover:border-[#4f46e5] hover:bg-indigo-50/10 cursor-pointer flex flex-col items-center justify-center transition-all duration-200 card-transition"
@@ -382,6 +415,95 @@ export default function BoardList({ onSelectBoard }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Feature Walkthrough Slideshow Modal */}
+      {showDemoModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-[#e5e7eb] rounded-3xl max-w-xl w-full p-8 shadow-2xl animate-scale-in relative overflow-hidden flex flex-col justify-between min-h-[420px]">
+            {/* Background Glow */}
+            <div className="absolute -right-20 -top-20 w-60 h-60 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
+            
+            {/* Top row */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#4f46e5] bg-indigo-50 border border-indigo-100/50 px-2.5 py-1 rounded-md">
+                Product Tour
+              </span>
+              <button 
+                onClick={() => setShowDemoModal(false)}
+                className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-[#111827] transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Slide Body */}
+            <div className="my-8 flex flex-col items-center text-center flex-1 justify-center">
+              {/* Feature Icon */}
+              {(() => {
+                const SlideIcon = DEMO_SLIDES[currentSlide].icon;
+                return (
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 border shadow-sm ${DEMO_SLIDES[currentSlide].color}`}>
+                    <SlideIcon className="w-7 h-7 stroke-[1.8]" />
+                  </div>
+                );
+              })()}
+              
+              <span className="text-[11px] font-bold text-[#6b7280] uppercase tracking-wider mb-1">
+                {DEMO_SLIDES[currentSlide].feature}
+              </span>
+              <h3 className="text-xl font-bold text-[#111827] mb-3">
+                {DEMO_SLIDES[currentSlide].title}
+              </h3>
+              <p className="text-xs text-[#6b7280] max-w-sm leading-relaxed">
+                {DEMO_SLIDES[currentSlide].description}
+              </p>
+            </div>
+
+            {/* Bottom Actions Row */}
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-auto">
+              {/* Indicator dots */}
+              <div className="flex items-center gap-1.5">
+                {DEMO_SLIDES.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentSlide(idx)}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                      idx === currentSlide ? 'bg-[#4f46e5] w-5' : 'bg-slate-200'
+                    }`}
+                  ></button>
+                ))}
+              </div>
+
+              {/* Slider Toggles */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={prevSlide}
+                  className="p-2 rounded-lg border border-[#e5e7eb] hover:bg-slate-50 text-[#6b7280] transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                {currentSlide === DEMO_SLIDES.length - 1 ? (
+                  <button
+                    onClick={() => setShowDemoModal(false)}
+                    className="px-4 py-2 rounded-lg bg-[#4f46e5] hover:bg-[#4338ca] text-white text-xs font-bold transition-all shadow-sm active:scale-95"
+                  >
+                    Finish Tour
+                  </button>
+                ) : (
+                  <button
+                    onClick={nextSlide}
+                    className="px-4 py-2 rounded-lg bg-[#4f46e5] hover:bg-[#4338ca] text-white text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center gap-1"
+                  >
+                    Next
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
           </div>
         </div>
       )}

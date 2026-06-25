@@ -1,10 +1,45 @@
 import React, { useState } from 'react';
 import BoardList from './components/BoardList';
 import BoardView from './components/BoardView';
+import ProjectsPage from './components/ProjectsPage';
+import TeamPage from './components/TeamPage';
+import AnalyticsPage from './components/AnalyticsPage';
 import { Kanban, Search, Bell, Zap } from 'lucide-react';
 
 export default function App() {
+  const [currentPage, setCurrentPage] = useState('workspace'); // workspace | projects | team | analytics
   const [currentBoardId, setCurrentBoardId] = useState(null);
+
+  const navigateToWorkspace = () => {
+    setCurrentPage('workspace');
+    setCurrentBoardId(null);
+  };
+
+  const renderContent = () => {
+    switch (currentPage) {
+      case 'projects':
+        return <ProjectsPage />;
+      case 'team':
+        return <TeamPage />;
+      case 'analytics':
+        return <AnalyticsPage />;
+      case 'workspace':
+      default:
+        if (currentBoardId) {
+          return (
+            <BoardView 
+              boardId={currentBoardId} 
+              onBack={() => setCurrentBoardId(null)} 
+            />
+          );
+        }
+        return (
+          <BoardList 
+            onSelectBoard={setCurrentBoardId} 
+          />
+        );
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fafafa] text-[#111827]">
@@ -14,7 +49,7 @@ export default function App() {
           
           {/* Left Area: Logo with lightning bolt icon & gradient text */}
           <div 
-            onClick={() => setCurrentBoardId(null)}
+            onClick={navigateToWorkspace}
             className="flex items-center gap-2 cursor-pointer group"
           >
             <div className="p-1.5 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center transition-all duration-300 group-hover:bg-indigo-100/80">
@@ -25,17 +60,40 @@ export default function App() {
             </span>
           </div>
 
-          {/* Center Navigation Links */}
+          {/* Center Navigation Links (Routing Toggles) */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-[#6b7280]">
             <button 
-              onClick={() => setCurrentBoardId(null)}
-              className={`transition-colors hover:text-[#4f46e5] ${!currentBoardId ? 'text-[#4f46e5]' : ''}`}
+              onClick={navigateToWorkspace}
+              className={`transition-colors hover:text-[#4f46e5] ${
+                currentPage === 'workspace' ? 'text-[#4f46e5]' : ''
+              }`}
             >
               Workspace
             </button>
-            <button className="transition-colors hover:text-[#4f46e5]">Projects</button>
-            <button className="transition-colors hover:text-[#4f46e5]">Team</button>
-            <button className="transition-colors hover:text-[#4f46e5]">Analytics</button>
+            <button 
+              onClick={() => { setCurrentPage('projects'); setCurrentBoardId(null); }}
+              className={`transition-colors hover:text-[#4f46e5] ${
+                currentPage === 'projects' ? 'text-[#4f46e5]' : ''
+              }`}
+            >
+              Projects
+            </button>
+            <button 
+              onClick={() => { setCurrentPage('team'); setCurrentBoardId(null); }}
+              className={`transition-colors hover:text-[#4f46e5] ${
+                currentPage === 'team' ? 'text-[#4f46e5]' : ''
+              }`}
+            >
+              Team
+            </button>
+            <button 
+              onClick={() => { setCurrentPage('analytics'); setCurrentBoardId(null); }}
+              className={`transition-colors hover:text-[#4f46e5] ${
+                currentPage === 'analytics' ? 'text-[#4f46e5]' : ''
+              }`}
+            >
+              Analytics
+            </button>
           </nav>
 
           {/* Right Area: Search, Bell, Upgrade Button, Avatar */}
@@ -79,16 +137,7 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-h-0">
-        {currentBoardId ? (
-          <BoardView 
-            boardId={currentBoardId} 
-            onBack={() => setCurrentBoardId(null)} 
-          />
-        ) : (
-          <BoardList 
-            onSelectBoard={setCurrentBoardId} 
-          />
-        )}
+        {renderContent()}
       </main>
     </div>
   );
